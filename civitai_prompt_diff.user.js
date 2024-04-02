@@ -154,6 +154,7 @@ function observeDocument(callback) {
         for (var i = 0; i < mutations.length; i++) {
             if (mutations[i].addedNodes.length) {
                 callback(mutations[i].target);
+                break;
             }
         }
         me.observe(document.body, {
@@ -189,10 +190,12 @@ function observeDocument(callback) {
         console.warn("This script only runs on civitai.com/generate");
         return;
     }
+
+    console.log("hello civitai.com/generate");
     init();
     showDiff();
     observeDocument(function (target) {
-        if (target.matches("div.mantine-Spoiler-root.mantine-a2c69m > div > div > div")) {
+        if (target.matches("div.mantine-a2c69m")) {
             init();
             showDiff();
         }
