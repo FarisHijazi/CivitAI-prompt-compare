@@ -15,4 +15,3 @@ Shows the additions and removals of prompts in the [civitai.com/generate](https:
 
 - normally it will compare the prompt with the next and previous
 - To choose a specific prompt as the base, click the [Diff Reference] button
-

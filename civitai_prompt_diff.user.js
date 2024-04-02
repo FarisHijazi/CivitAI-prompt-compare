@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         CivitAI/generate prompt diff
+// @name         CivitAI prompt compare
 // @namespace    https://github.com/FarisHijazi
 // @description  Frontend mod to show (diff)erence between prompts in civitai.com/generate
 // @author       Faris Hijazi
@@ -21,75 +21,66 @@
 // @connect      *
 // ==/UserScript==
 
-
-
-// Add CSS stylesheet for .referencePrompt selector
-let styleEl = document.createElement('style');
-styleEl.innerHTML = `
-    .referencePrompt {
-        background-color: rgba(255, 255, 0, 0.3);
-    }
-`;
-document.head.appendChild(styleEl);
-
-
-// Utility function to escape HTML to prevent XSS attacks
+/* Utility function to escape HTML to prevent XSS attacks */
 function escapeHtml(html) {
     var text = document.createTextNode(html);
-    var p = document.createElement('p');
+    var p = document.createElement("p");
     p.appendChild(text);
     return p.innerHTML;
 }
 
 function highlightDifferences(oldText, newText) {
     const diff = Diff.diffWords(oldText, newText);
-    let highlightedText = '';
+    let highlightedText = "";
 
-    diff.forEach(part => {
-        // Softer darker colors for additions and deletions, nothing for unchanged parts
-        const color = part.added ? 'lightgreen' :
-            part.removed ? 'lightcoral' : 'transparent';
-        const span = `<span style="background-color:${color};${part.removed ? 'text-decoration: line-through;' : ''}">${escapeHtml(part.value)}</span>`;
+    diff.forEach((part) => {
+        /* Softer darker colors for additions and deletions, nothing for unchanged parts */
+        const color = part.added ? "lightgreen" : part.removed ? "lightcoral" : "transparent";
+        const span = `<span style="background-color:${color};${
+            part.removed ? "text-decoration: line-through;" : ""
+        }">${escapeHtml(part.value)}</span>`;
         highlightedText += span;
     });
 
     return highlightedText;
 }
 
-let getPromptDivs = () => document.querySelectorAll("div > div.mantine-Stack-root.mantine-73946b > div.mantine-Spoiler-root.mantine-a2c69m > div > div > div");
+let getPromptDivs = () =>
+    document.querySelectorAll(
+        "div > div.mantine-Stack-root.mantine-73946b > div.mantine-Spoiler-root.mantine-a2c69m > div > div > div"
+    );
 
 function showDiff() {
-    // reset Diffs every time
+    /* reset Diffs every time */
     getPromptDivs().forEach(function removeDiffsFromDiv(divElement) {
         if (divElement.originalInnerHTML) {
             divElement.innerHTML = divElement.originalInnerHTML;
         }
     });
 
-
-    // get all divs again
+    /* get all divs again */
     let promptDivs = getPromptDivs();
     if (!promptDivs.length) {
         console.warn("No promptDivs found");
         return;
     } else {
-        console.log('showDiff()');
+        console.log("showDiff()");
     }
 
-    let referenceDiv = document.querySelector('.referencePrompt');
+    let referenceDiv = document.querySelector(".referencePrompt");
 
     if (referenceDiv === null) {
-        // implicit referenceDiv
+        /* implicit referenceDiv */
         referenceDiv = promptDivs[0];
 
-        // save class so that we can reference it later
-        referenceDiv.classList.add('referencePrompt');
-        console.log('the referenceDiv:', referenceDiv);
+        /* save class so that we can reference it later */
+        referenceDiv.classList.add("referencePrompt");
+        console.log("the referenceDiv:", referenceDiv);
 
-        let referenceIndex = Array.from(promptDivs).findIndex(div => div.classList.contains('referencePrompt'));
+        let referenceIndex = Array.from(promptDivs).findIndex((div) => div.classList.contains("referencePrompt"));
         if (referenceIndex === -1) {
             referenceIndex = 0;
-            console.warn('referenceIndex not found, setting to 0, although it should be this:', referenceDiv);
+            console.warn("referenceIndex not found, setting to 0, although it should be this:", referenceDiv);
         }
 
         for (let i = referenceIndex + 1; i < promptDivs.length; i++) {
@@ -110,7 +101,7 @@ function showDiff() {
         }
     } else {
         let oldText = referenceDiv.innerText;
-        // explicit from button press
+        /* explicit from button press */
         for (let i = 0; i < promptDivs.length; i++) {
             let newText = promptDivs[i].innerText;
             if (!promptDivs[i].originalInnerHTML) promptDivs[i].originalInnerHTML = promptDivs[i].innerHTML;
@@ -120,43 +111,41 @@ function showDiff() {
     }
 }
 function init() {
-    document.querySelectorAll('.referencePrompt').forEach(div => div.classList.remove('referencePrompt'));  // when automated, return back to automated
+    /* when automated, return back to automated */
+    document.querySelectorAll(".referencePrompt").forEach((div) => div.classList.remove("referencePrompt"));
     let promptDivs = getPromptDivs();
 
-    let showMoreButtons = [...promptDivs].map(div => div.parentElement.parentElement.nextElementSibling);
-    if (showMoreButtons.length) showMoreButtons.filter(div => div && div.innerText === 'Show More').forEach(div => div.click());
+    let showMoreButtons = [...promptDivs].map((div) => div.parentElement.parentElement.nextElementSibling);
+    if (showMoreButtons.length)
+        showMoreButtons.filter((div) => div && div.innerText === "Show More").forEach((div) => div.click());
 
     for (const promptDiv of promptDivs) {
         let showMoreButton = promptDiv.parentElement.parentElement.nextElementSibling;
         if (!showMoreButton) {
-            console.warn('showMoreButton not found');
+            console.warn("showMoreButton not found");
             continue;
         }
-        if (promptDiv.parentElement.parentElement.parentElement.querySelector('.focusThisButton')) continue;
+        if (promptDiv.parentElement.parentElement.parentElement.querySelector(".focusThisButton")) continue;
         const focusThisButton = showMoreButton.cloneNode();
-        focusThisButton.innerText = 'Diff Reference';
-        focusThisButton.classList.add('focusThisButton');
-        focusThisButton.addEventListener('click', (event) => {
-            event.stopPropagation(); // Prevent the click event from propagating to the showMoreButton
-            document.querySelectorAll('.referencePrompt').forEach(div => div.classList.remove('referencePrompt'));
-            const newPromptDiv = focusThisButton.parentElement.querySelector('div.mantine-Text-root.mantine-syw07n');
-            newPromptDiv.classList.add('referencePrompt');
-            console.log('clicked focusThisButton', newPromptDiv, focusThisButton);
+        focusThisButton.innerText = "Diff Reference";
+        focusThisButton.classList.add("focusThisButton");
+        focusThisButton.addEventListener("click", (event) => {
+            event.stopPropagation(); /* Prevent the click event from propagating to the showMoreButton */
+            document.querySelectorAll(".referencePrompt").forEach((div) => div.classList.remove("referencePrompt"));
+            const newPromptDiv = focusThisButton.parentElement.querySelector("div.mantine-Text-root.mantine-syw07n");
+            newPromptDiv.classList.add("referencePrompt");
+            console.log("clicked focusThisButton", newPromptDiv, focusThisButton);
             showDiff();
 
-            // TODO: when pressed, change button to become a different mode: progressive diffing, which will reset all buttons to normal, and will delete all classlist .referencePrompt
-
+            /* TODO: when pressed, change button to become a different mode: progressive diffing, which will reset all buttons to normal, and will delete all classlist .referencePrompt */
         });
         showMoreButton.after(focusThisButton);
-        focusThisButton.style.marginLeft = '10px';
-        showMoreButton.style.marginRight = '10px';
+        focusThisButton.style.marginLeft = "10px";
+        showMoreButton.style.marginRight = "10px";
     }
 }
 
-// TODO: automatic init and update on new divs
-
-
-
+/* TODO: automatic init and update on new divs */
 
 function observeDocument(callback) {
     callback(document.body);
@@ -182,14 +171,28 @@ function observeDocument(callback) {
 }
 
 (function () {
-    if (!location.href.startsWith('https://civitai.com/generate')) {
+    if (typeof Diff === "undefined") {
+        console.error("Diff is not defined");
+        return;
+    }
+
+    /* Add CSS stylesheet for .referencePrompt selector */
+    let styleEl = document.createElement("style");
+    styleEl.innerHTML = `
+    .referencePrompt {
+        background-color: rgba(255, 255, 0, 0.3);
+    }
+`;
+    document.head.appendChild(styleEl);
+
+    if (!location.href.startsWith("https://civitai.com/generate")) {
         console.warn("This script only runs on civitai.com/generate");
         return;
     }
     init();
     showDiff();
     observeDocument(function (target) {
-        if (target.matches('div.mantine-Spoiler-root.mantine-a2c69m > div > div > div')) {
+        if (target.matches("div.mantine-Spoiler-root.mantine-a2c69m > div > div > div")) {
             init();
             showDiff();
         }
