@@ -3,10 +3,10 @@
 // @namespace    https://github.com/FarisHijazi
 // @description  Frontend mod to show (diff)erence between prompts in civitai.com/generate
 // @author       Faris Hijazi
-// @version      0.1
+// @version      0.2
 // @icon         https://www.google.com/s2/favicons?domain=https://civitai.com/
-// @match        https://civitai.com/generate*
-// @include      https://civitai.com/generate*
+// @match        https://civitai.com/*
+// @include      https://civitai.com/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_download
 // @grant        GM_setValue
@@ -186,10 +186,10 @@ function observeDocument(callback) {
 `;
     document.head.appendChild(styleEl);
 
-    if (!location.href.startsWith("https://civitai.com/generate")) {
-        console.warn("This script only runs on civitai.com/generate");
-        return;
-    }
+    // if (!location.href.startsWith("https://civitai.com/generate")) {
+    //     console.warn("This script only runs on civitai.com/generate");
+    //     return;
+    // }
 
     console.log("hello civitai.com/generate");
     init();
