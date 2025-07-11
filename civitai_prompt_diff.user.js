@@ -1,9 +1,11 @@
 // ==UserScript==
 // @name         CivitAI prompt compare
 // @namespace    https://github.com/FarisHijazi
+// @updateURL    https://github.com/FarisHijazi/CivitAI-prompt-compare/raw/master/civitai_prompt_diff.user.js
+// @downloadURL  https://github.com/FarisHijazi/CivitAI-prompt-compare/raw/master/civitai_prompt_diff.user.js
 // @description  Frontend mod to show (diff)erence between prompts in civitai.com/generate
 // @author       Faris Hijazi
-// @version      0.2
+// @version      0.3
 // @icon         https://www.google.com/s2/favicons?domain=https://civitai.com/
 // @match        https://civitai.com/*
 // @include      https://civitai.com/*
@@ -44,11 +46,9 @@ function highlightDifferences(oldText, newText) {
 
     return highlightedText;
 }
-
-let getPromptDivs = () =>
-    document.querySelectorAll(
-        "div > div.mantine-Stack-root.mantine-73946b > div.mantine-Spoiler-root.mantine-a2c69m > div > div > div"
-    );
+let getPromptDivs = () => [...document.querySelectorAll(
+    "[id^=mantine] > div.scroll-area div.mantine-Text-root"
+)].filter(div=>!!div.innerText)
 
 function showDiff() {
     /* reset Diffs every time */
@@ -195,7 +195,7 @@ function observeDocument(callback) {
     init();
     showDiff();
     observeDocument(function (target) {
-        if (target.matches("div.mantine-a2c69m")) {
+        if (target.matches("div[class*=mantine]")) {
             init();
             showDiff();
         }
